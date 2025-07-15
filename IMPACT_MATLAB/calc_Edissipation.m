@@ -1,17 +1,27 @@
 function [f] = calc_Edissipation(rho,H,E)
-%calc_Edissipation calculates energy dissipation, f(z), due to atmospheric
-% ionoization from a monoenergetic electron beam 
-% (valid for E from 100eV to 1MeV)- Fang+ 2010
-% 
-% Inputs :
-%   rho(z) = atmospheric mass density (g cm^-3)
-%   H(z)   = scale height (cm)
-%   E(n) = vector of electron energies (keV)
-%   
-% Outputs:
-%   f(y,n) = energy disspation as a function of altitude 
-%       where y(z) is column mass and n in num of energies
 
+%CALC_EDISSIPATION Calculate energy dissipation profile for monoenergetic electrons
+%
+%   f = calc_Edissipation(rho, H, E) computes the altitude-dependent 
+%   energy dissipation rate, f(z, E) for a set of monoenergetic electron beams
+%   precipitating into the atmosphere. The calculation follows the parameterization 
+%   described in Fang et al. (2010) and is valid for electron energies from 
+%   100 eV to 1 MeV.
+%
+%   INPUTS:
+%       rho(z) - Vector of atmospheric mass densities (g cm^-3) as a function of altitude
+%       H(z)   - Vector of atmospheric scale heights (cm) as a function of altitude
+%       E(n)   - Vector of electron energies (keV)
+%
+%   OUTPUT:
+%       f(z, n) - 2D array of energy dissipation rates as a function of altitude 
+%                 and incident electron energy. 
+%                 Dimensions: [num_altitudes x num_energies]
+%
+% CITATION:
+%   Fang, X., C. E. Randall, D. Lummerzheim, W. Wang, G. Lu, S. C. Solomon, 
+%   and R. A. Frahm (2010), Parameterization of monoenergetic electron impact 
+%   ionization, Geophys. Res. Lett., 37, L22106, doi:10.1029/2010GL045406.
 
     %load Pij from file
     coeff = load('coeff_fang10.mat');
