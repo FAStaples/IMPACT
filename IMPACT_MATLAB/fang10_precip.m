@@ -7,9 +7,10 @@
 
 Lshell=3;
 E = linspace(1, 1000, 100); % Energy in keV
-pa = linspace(0, 180, 181); % Pitch angle in deg
-time = linspace(0, 1, 10000); %time 
+pa = linspace(0, 180, 1000); % Pitch angle in deg
+time = linspace(0, 0.0001, 10000); %time 
 dt = time(2)-time(1); %timestep
+j=def_testdata(E,pa,time); %define number flux cm^-2 s^-1 
 
 % Enforce energy range to ensure within valid limits of Fang+2010 ionisation model. 
 if any(E < 1) || any(E > 1000)
@@ -26,10 +27,9 @@ f107   = ones(length(time),1)*50.0;
 Ap     = ones(length(time),1)*5.0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Define incident energy flux Qe of dimension [nt,nE,nPa]:
-%TODO: add function to convert radiation belt number fluxes, J(t,E,pa), to energy fluxes, Qe(t,E,pa) 
-%ForNow: we define a test array:
-Qe = def_testdata(E,pa,time);
+%Calculate incident energy flux Qe of dimension [nt,nE,nPa]:
+E_grid = reshape(E, 1, 1, length(E));
+Qe = j .* E_grid;  % units: keV cm^-2 s^-1 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %calculate bounce orbit times for an energy and pitch angle grid:
@@ -39,7 +39,18 @@ Qe = def_testdata(E,pa,time);
 %calculate bounce time
 t_b = bounce_time_arr(Lshell,E_arr./1000,deg2rad(pa_arr),'e');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%calculate mirror altitude for pitch angle and L shell:
+mirr_alt = dipole_mirror_altitude(pa,Lshell);
 
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %calculate energy dissipation for the specified energy grid:
+    %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
+    %specify atmospheric conditions through MSIS
+    [rho,H] = get_msis_dat(alt,f107a(1),f107(1),Ap(1), false); 
+    %calculate energy dissipation for the specified energy grid
+    q_diss = calc_Edissipation(rho,H,E); 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over time to calculate and apply loss rates to Qe:
@@ -47,13 +58,13 @@ t_b = bounce_time_arr(Lshell,E_arr./1000,deg2rad(pa_arr),'e');
 for  t=1:10%length(time)-1
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %calculate energy dissipation for the specified energy grid:
-    %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
-    %specify atmospheric conditions through MSIS
-    [rho,H] = get_msis_dat(alt,f107a(t),f107(t),Ap(t), false); 
-    %calculate energy dissipation for the specified energy grid
-    q_diss = calc_Edissipation(rho,H,E); 
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     %calculate energy dissipation for the specified energy grid:
+%     %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
+%     %specify atmospheric conditions through MSIS
+%     [rho,H] = get_msis_dat(alt,f107a(t),f107(t),Ap(t), false); 
+%     %calculate energy dissipation for the specified energy grid
+%     q_diss = calc_Edissipation(rho,H,E); 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %calculate loss factor:
@@ -63,33 +74,38 @@ for  t=1:10%length(time)-1
 
     %loop over pitch angle
     for a=1:length(pa)
-    
-
-        %TODO: add function to calculate mirror point
-        %ForNow: set mirror point to 100km
-        mirr_alt = 100; 
-        %mirr_alt = mirror_altitude(pa(a),Lshell); 
-        
-        %calculate loss rates for electrons mirroring within the atmosphere
-        if mirr_alt > 1000.
-            %if mirror altitude above 1000km, set loss rate to zero
-            lossfactor(a,:) = zeros(length(E));
+        if isnan(mirr_alt(a))
+            %check the mirror altitude is real 
+            % (can become nan at 180 and 0 in dipole)   
+            lossfactor(a,:) = ones(1,length(E));
         else
-     
-            % Find index closest to mirr_alt
-            [~, idx] = min(abs(alt - mirr_alt));
-              
-            %calculate cumulative ionization as function of altitude
-            %TODO: rename function to cumulative ionisation
-            [q_cum,q_tot] = calc_ionization(Qe(t,a,:),alt,q_diss,H); 
-             
-            % Get cumulative ionization rate down to mirr_alt
-            q_to_mirr_alt = q_cum(idx,:);
-             
-            %calculate the fraction flux lost
-            lossfactor(a,:) = q_to_mirr_alt./q_cum(1,:); 
-
+            %calculate loss rates for electrons mirroring within the atmosphere
+            if mirr_alt(a) > 1000.
+                %if mirror altitude above 1000km, set loss rate to zero
+                lossfactor(a,:) = zeros(1,length(E));
+            elseif mirr_alt(a) <= 0.
+                %if mirror altitude at or below the ground, set loss rate to one
+                lossfactor(a,:) = ones(1,length(E));
+            else    
+         
+                % Find index closest to mirr_alt
+                [~, idx] = min(abs(alt - mirr_alt(a)));
+                  
+                %calculate cumulative ionization as function of altitude
+                [q_cum,q_tot] = calc_ionization(Qe(t,a,:),alt,q_diss,H); 
+                 
+                % Get cumulative ionization rate down to mirr_alt
+                q_to_mirr_alt = q_cum(idx,:);
+                 
+                %calculate the fraction flux lost
+                lossfactor(a,:) = q_to_mirr_alt./q_cum(1,:); 
+    
+            end
         end
+
+
+
+  
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -106,16 +122,17 @@ for  t=1:10%length(time)-1
     Qe(Qe<0) = 0;
 
     semilogy(pa, Qe(t,:,50))
+
     hold on
 
 end
 
-hold off
+ hold off
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% test ionization profiles %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %% test ionization profiles %%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
 %     semilogx(q_tot(:,1),alt)
 %     hold on
 %     for e=2:length(E)

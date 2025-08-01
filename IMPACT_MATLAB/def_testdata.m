@@ -1,8 +1,8 @@
-function [Qe] = def_testdata(E,pa,time)
+function [j] = def_testdata(E,pa,time)
 %DEF_EFLUX Creates a synthetic incident energy flux array for testing
 %
-%   q = def_Eflux(E, pa, time) generates a 3D test array representing
-%   the incident energy flux of electrons as a function of energy and 
+%   j = def_testdata(E, pa, time) generates a 3D test array representing
+%   the incident number flux of electrons as a function of energy and 
 %   pitch angle, constant in time.
 %
 %   INPUTS:
@@ -11,28 +11,28 @@ function [Qe] = def_testdata(E,pa,time)
 %       time - Vector of time points (s)
 %
 %   OUTPUT:
-%       Qe   - 3D array of size [nt x nAlpha x nE] representing 
-%              incident energy flux in (keV cm^-2 s^-1)
+%       J   - 3D array of size [nt x nAlpha x nE] representing 
+%              incident energy flux in (cm^-2 s^-1)
 %
 %   The flux is defined as:
-%       q_E(E)      ~ exp(-E/kT)
-%       q_alpha(pa) ~ sin^2(pa) + 1
+%       j_E(E)      ~ exp(-E/kT)
+%       j_alpha(pa) ~ sin^2(pa) + 1
 %   and is constant over time.
 
 % Energy dependence: exponential decay with characteristic energy 500 keV
-q_E = 6.2415e8 .* exp(-E / 500);   % [1 x nE]
+j_E = 1e6 .* exp(-E / 500);   % [1 x nE] particles / cm^2 / s / keV / sr
 
 % Pitch angle dependence: sin^2(pa) + 1
-q_alpha = (sind(pa)).^2 + 1;       % [1 x nAlpha]
+j_alpha = (sind(pa)).^2 + 1;       % [1 x nAlpha]
 
-% Create 2D grid of q_E and q_alpha
-q_EA = q_E' * q_alpha;             % [nE x nAlpha]
+% Create 2D grid of j_E and j_alpha
+j_EA = j_E' * j_alpha;             % [nE x nAlpha]
 
 % Replicate across time dimension
-Qe = repmat(q_EA, 1, 1, length(time)); % [nE x nAlpha x nt]
+j = repmat(j_EA, 1, 1, length(time)); % [nE x nAlpha x nt]
 
 % Permute to [nt x nAlpha x nE]
-Qe = permute(Qe, [3, 2, 1]);
+j = permute(j, [3, 2, 1]);
 
 
 end
