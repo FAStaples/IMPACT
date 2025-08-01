@@ -44,13 +44,14 @@ t_b = bounce_time_arr(Lshell,E_arr./1000,deg2rad(pa_arr),'e');
 mirr_alt = dipole_mirror_altitude(pa,Lshell);
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %calculate energy dissipation for the specified energy grid:
-    %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
-    %specify atmospheric conditions through MSIS
-    [rho,H] = get_msis_dat(alt,f107a(1),f107(1),Ap(1), false); 
-    %calculate energy dissipation for the specified energy grid
-    q_diss = calc_Edissipation(rho,H,E); 
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%leving these here as it makes testing faster
+%     %calculate energy dissipation for the specified energy grid:
+%     %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
+%     %specify atmospheric conditions through MSIS
+%     [rho,H] = get_msis_dat(alt,f107a(1),f107(1),Ap(1), false); 
+%     %calculate energy dissipation for the specified energy grid
+%     q_diss = calc_Edissipation(rho,H,E); 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over time to calculate and apply loss rates to Qe:
@@ -58,13 +59,13 @@ mirr_alt = dipole_mirror_altitude(pa,Lshell);
 for  t=1:10%length(time)-1
 
 
-%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     %calculate energy dissipation for the specified energy grid:
-%     %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
-%     %specify atmospheric conditions through MSIS
-%     [rho,H] = get_msis_dat(alt,f107a(t),f107(t),Ap(t), false); 
-%     %calculate energy dissipation for the specified energy grid
-%     q_diss = calc_Edissipation(rho,H,E); 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %calculate energy dissipation for the specified energy grid:
+    %NOTE: If code needs to speed up, and F107/Ap are constant, then this can be taken out of time loop
+    %specify atmospheric conditions through MSIS
+    [rho,H] = get_msis_dat(alt,f107a(t),f107(t),Ap(t), false); 
+    %calculate energy dissipation for the specified energy grid
+    q_diss = calc_Edissipation(rho,H,E); 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %calculate loss factor:
