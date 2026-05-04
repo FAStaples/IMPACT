@@ -139,27 +139,27 @@ end
 %     for e=2:length(E)
 %         semilogx(q_tot(:,e),alt)
 %     end    
-%     
+% 
 %     xlim([10,1e5])
 %     ylim([50,400])
-%     
+% 
 %     % Axis labels
 %     xlabel('Ionization Rate (cm^{-3} s^{-1})')
 %     ylabel('Altitude (km)')
-%     
+% 
 %     % Add minor ticks
 %     ax = gca;               % get current axes handle
 %     ax.YMinorTick = 'on';   % turn on minor ticks on y-axis
 %     ax.XMinorTick = 'on';   % optional — minor ticks on x-axis too
-%     
+% 
 %     legendStrings = strings(1,length(E));
 %     for n = 1:length(E)
 %         legendStrings(n) = sprintf('%.1f keV', E(n));
 %     end
 %     legend(legendStrings, 'Location', 'best')
-%     
+% 
 %     title('f_{10.7} = 50.0, Ap = 5.0, incident energy flux = 1 erg cm^{-2} s^{-1}')
-%     
+% 
 %     hold off
 
 
